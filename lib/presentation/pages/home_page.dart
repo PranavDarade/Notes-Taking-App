@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/note_entity.dart';
+import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../core/constants/app_constants.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/search_bar.dart' as custom;
@@ -23,6 +25,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final notesAsync = ref.watch(notesNotifierProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final filter = ref.watch(notesFilterProvider);
     
     return Scaffold(
       body: CustomScrollView(
@@ -85,9 +88,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           
           // Pinned Notes Section
           if (searchQuery.isEmpty)
-            SliverToBoxAdapter(
-              child: _buildPinnedSection(),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 0)),
           
           // Notes Grid
           notesAsync.when(
@@ -98,9 +99,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                 );
               }
               
-              final displayNotes = searchQuery.isEmpty 
-                  ? notes.where((note) => !note.isPinned).toList()
-                  : notes;
+              List<NoteEntity> displayNotes = List.of(notes);
+              // Apply filter first
+              switch (filter) {
+                case NotesFilter.pinned:
+                  displayNotes = displayNotes.where((n) => n.isPinned).toList();
+                  break;
+                case NotesFilter.favorites:
+                  displayNotes = displayNotes.where((n) => n.isFavorite).toList();
+                  break;
+                case NotesFilter.locked:
+                  displayNotes = displayNotes.where((n) => n.isLocked).toList();
+                  break;
+                case NotesFilter.recent:
+                  displayNotes.sort((a,b)=> b.updatedAt.compareTo(a.updatedAt));
+                  break;
+                case NotesFilter.all:
+                  break;
+              }
+
+              // Then apply search
+              if (searchQuery.isNotEmpty) {
+                displayNotes = displayNotes.where((n) {
+                  final hay = (n.title + '\n' + _plainPreview(n.content)).toLowerCase();
+                  return hay.contains(searchQuery.toLowerCase());
+                }).toList();
+              }
               
               return SliverPadding(
                 padding: const EdgeInsets.all(AppConstants.padding),
@@ -167,6 +191,19 @@ class _HomePageState extends ConsumerState<HomePage> {
         label: const Text('New Note'),
       ),
     );
+  }
+
+  String _plainPreview(String content) {
+    try {
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        final doc = quill.Document.fromJson(decoded);
+        return doc.toPlainText();
+      }
+      return content;
+    } catch (_) {
+      return content;
+    }
   }
 
   Widget _buildPinnedSection() {

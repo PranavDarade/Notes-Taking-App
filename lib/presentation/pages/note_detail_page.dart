@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../core/constants/app_constants.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_card.dart';
@@ -244,12 +246,17 @@ class NoteDetailPage extends ConsumerWidget {
   }
 
   String _getContentText(String content) {
+    if (content.isEmpty) return 'No content';
     try {
-      // Try to parse as JSON (Quill delta)
-      // For now, return a simple text representation
-      return content.isEmpty ? 'No content' : content;
-    } catch (e) {
-      return content.isEmpty ? 'No content' : content;
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        final doc = quill.Document.fromJson(decoded);
+        final text = doc.toPlainText().trim();
+        return text.isEmpty ? 'No content' : text;
+      }
+      return content;
+    } catch (_) {
+      return content;
     }
   }
 

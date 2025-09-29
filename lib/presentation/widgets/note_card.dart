@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:intl/intl.dart';
 import '../../domain/entities/note_entity.dart';
 import '../../core/constants/app_constants.dart';
@@ -206,7 +208,16 @@ class NoteCard extends ConsumerWidget {
 
   String _getContentPreview(String content) {
     if (content.isEmpty) return '';
-    final plain = content.replaceAll(RegExp('\\s+'), ' ');
-    return plain.length > 100 ? '${plain.substring(0, 100)}...' : plain;
+    try {
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        final doc = quill.Document.fromJson(decoded);
+        final text = doc.toPlainText().trim();
+        return text.length > 100 ? '${text.substring(0, 100)}...' : text;
+      }
+      return content.length > 100 ? '${content.substring(0, 100)}...' : content;
+    } catch (_) {
+      return content.length > 100 ? '${content.substring(0, 100)}...' : content;
+    }
   }
 }

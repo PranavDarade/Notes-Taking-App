@@ -56,6 +56,10 @@ final favoriteNotesProvider = FutureProvider<List<NoteEntity>>((ref) async {
 // Search Provider
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
+enum NotesFilter { all, pinned, favorites, locked, recent }
+
+final notesFilterProvider = StateProvider<NotesFilter>((ref) => NotesFilter.all);
+
 final searchResultsProvider = FutureProvider<List<NoteEntity>>((ref) async {
   final query = ref.watch(searchQueryProvider);
   if (query.isEmpty) return [];

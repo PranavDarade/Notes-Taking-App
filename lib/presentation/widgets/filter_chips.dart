@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/notes_provider.dart';
 
 enum FilterType {
   all,
@@ -36,10 +37,24 @@ class _FilterChipsState extends ConsumerState<FilterChips> {
               label: Text(_getFilterLabel(filter)),
               selected: isSelected,
               onSelected: (selected) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-                // TODO: Implement filter logic
+                setState(() { _selectedFilter = filter; });
+                switch (filter) {
+                  case FilterType.all:
+                    ref.read(notesFilterProvider.notifier).state = NotesFilter.all;
+                    break;
+                  case FilterType.pinned:
+                    ref.read(notesFilterProvider.notifier).state = NotesFilter.pinned;
+                    break;
+                  case FilterType.favorites:
+                    ref.read(notesFilterProvider.notifier).state = NotesFilter.favorites;
+                    break;
+                  case FilterType.locked:
+                    ref.read(notesFilterProvider.notifier).state = NotesFilter.locked;
+                    break;
+                  case FilterType.recent:
+                    ref.read(notesFilterProvider.notifier).state = NotesFilter.recent;
+                    break;
+                }
               },
               selectedColor: theme.colorScheme.primaryContainer,
               checkmarkColor: theme.colorScheme.onPrimaryContainer,
