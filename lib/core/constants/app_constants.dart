@@ -1,6 +1,6 @@
 class AppConstants {
   // App Info
-  static const String appName = 'Notes App';
+  static const String appName = 'SyncNote';
   static const String appVersion = '1.0.0';
   
   // Storage Keys

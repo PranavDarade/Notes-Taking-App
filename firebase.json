@@ -1,0 +1,24 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "notes-taking-app-ba0a6",
+          "appId": "1:810505310163:android:9f3e5a1d3ad58a8c942926",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "notes-taking-app-ba0a6",
+          "configurations": {
+            "android": "1:810505310163:android:9f3e5a1d3ad58a8c942926"
+          }
+        }
+      }
+    }
+  }
+}

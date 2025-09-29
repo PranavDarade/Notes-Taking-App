@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// Using FirebaseAuth signInWithProvider for Google Sign-In
 import '../domain/entities/user_entity.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -57,8 +58,18 @@ class AuthService implements AuthRepository {
 
   @override
   Future<Either<String, UserEntity>> signInWithGoogle() async {
-    // TODO: Implement Google Sign-In when google_sign_in package is added
-    return const Left('Google Sign-In not implemented yet');
+    try {
+      final UserCredential userCredential = await _auth.signInWithProvider(GoogleAuthProvider());
+      final User? user = userCredential.user;
+      if (user == null) {
+        return const Left('Google Sign-In failed');
+      }
+      return Right(_mapFirebaseUserToEntity(user));
+    } on FirebaseAuthException catch (e) {
+      return Left('Google Sign-In failed: ${e.message}');
+    } catch (e) {
+      return Left('Google Sign-In failed: ${e.toString()}');
+    }
   }
 
   @override

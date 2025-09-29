@@ -73,7 +73,6 @@ class NotificationService {
       tz.TZDateTime.from(note.reminderDate!, tz.local),
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 

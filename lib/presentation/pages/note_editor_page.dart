@@ -31,14 +31,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _note = note;
 
     try {
-      quill.Delta delta;
-      if (note.content.isEmpty) {
-        delta = quill.Delta()..insert('\n');
-      } else {
-        delta = quill.Delta.fromJson(jsonDecode(note.content));
-      }
+      final document = _buildDocumentFromContent(note.content);
       _controller = quill.QuillController(
-        document: quill.Document.fromDelta(delta),
+        document: document,
         selection: const TextSelection.collapsed(offset: 0),
       );
     } catch (_) {
@@ -49,10 +44,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _save() async {
-    final delta = _controller.document.toDelta();
-    _note.content = jsonEncode(delta.toJson());
+    final opsJson = _controller.document.toDelta().toJson();
+    _note.content = jsonEncode(opsJson);
     _note.updatedAt = DateTime.now();
     await _hive.updateNote(_note);
+  }
+
+  quill.Document _buildDocumentFromContent(String contentJson) {
+    if (contentJson.isEmpty) {
+      return quill.Document();
+    }
+    final dynamic decoded = jsonDecode(contentJson);
+    if (decoded is List) {
+      return quill.Document.fromJson(decoded);
+    }
+    return quill.Document();
   }
 
   @override
@@ -78,19 +84,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       ),
       body: Column(
         children: [
-          quill.QuillToolbar.simple(
-            configurations: quill.QuillSimpleToolbarConfigurations(
-              controller: _controller,
-            ),
-          ),
+          quill.QuillSimpleToolbar(controller: _controller),
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
               child: quill.QuillEditor.basic(
-                configurations: quill.QuillEditorConfigurations(
-                  controller: _controller,
-                  readOnly: false,
-                ),
+                controller: _controller,
               ),
             ),
           ),
