@@ -93,18 +93,14 @@ class SyncService {
         // Remote note doesn't exist locally - add it
         await _hiveService.addNote(_mapEntityToModel(remoteNote));
       } else {
-        // Both exist - resolve conflict based on lastSyncedAt
-        if (remoteNote.lastSyncedAt != null && 
-            (localNote.lastSyncedAt == null || 
-             remoteNote.lastSyncedAt!.isAfter(localNote.lastSyncedAt!))) {
+        // Both exist - resolve conflict based on updatedAt timestamps
+        if (remoteNote.updatedAt.isAfter(localNote.updatedAt)) {
           // Remote is newer - update local
           await _hiveService.updateNote(_mapEntityToModel(remoteNote));
-        } else if (localNote.lastSyncedAt != null && 
-                   (remoteNote.lastSyncedAt == null || 
-                    localNote.lastSyncedAt!.isAfter(remoteNote.lastSyncedAt!))) {
+        } else if (localNote.updatedAt.isAfter(remoteNote.updatedAt)) {
           // Local is newer - update remote
           await _updateRemoteNote(localNote, userId);
-        }
+        } // if equal, do nothing
       }
     }
     

@@ -175,6 +175,16 @@ class NotesNotifier extends StateNotifier<AsyncValue<List<NoteEntity>>> {
     await updateNote(updatedNote);
   }
 
+  Future<void> toggleLocked(String id) async {
+    final currentNotes = state.value ?? [];
+    final note = currentNotes.firstWhere((n) => n.id == id);
+    final updatedNote = note.copyWith(
+      isLocked: !note.isLocked,
+      updatedAt: DateTime.now(),
+    );
+    await updateNote(updatedNote);
+  }
+
   Future<void> refresh() async {
     await _loadNotes();
   }

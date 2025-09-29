@@ -76,14 +76,35 @@ class NoteDetailPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Note Card
-                NoteCard(
-                  note: note,
-                  onTap: () {},
-                  onEdit: () => _editNote(context, noteId),
-                  onDelete: () => _deleteNote(context, ref, noteId),
-                  onTogglePin: () => _togglePin(ref, noteId),
-                  onToggleFavorite: () => _toggleFavorite(ref, noteId),
+                // Header Card (title only)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppConstants.padding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                note.title.isEmpty ? 'Untitled' : note.title,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            if (note.isFavorite) const Icon(Icons.favorite, color: Colors.red),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time, size: 16),
+                            const SizedBox(width: 6),
+                            Text(_formatDateTime(note.createdAt)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 
                 const SizedBox(height: 24),
@@ -310,6 +331,10 @@ class NoteDetailPage extends ConsumerWidget {
 
   void _toggleFavorite(WidgetRef ref, String noteId) {
     ref.read(notesNotifierProvider.notifier).toggleFavorite(noteId);
+  }
+
+  void _toggleLock(WidgetRef ref, String noteId) {
+    ref.read(notesNotifierProvider.notifier).toggleLocked(noteId);
   }
 
   void _deleteNote(BuildContext context, WidgetRef ref, String noteId) {
