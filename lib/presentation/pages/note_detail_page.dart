@@ -32,6 +32,14 @@ class NoteDetailPage extends ConsumerWidget {
             icon: const Icon(Icons.edit),
             onPressed: () => _editNote(context, noteId),
           ),
+          noteAsync.maybeWhen(
+            data: (note) => IconButton(
+              icon: Icon(note?.isLocked == true ? Icons.lock_open : Icons.lock_outline),
+              onPressed: () => _toggleLock(ref, noteId),
+              tooltip: 'Lock/Unlock',
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
           PopupMenuButton<String>(
             onSelected: (value) => _handleMenuAction(context, ref, value, noteId),
             itemBuilder: (context) => [
@@ -95,13 +103,7 @@ class NoteDetailPage extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time, size: 16),
-                            const SizedBox(width: 6),
-                            Text(_formatDateTime(note.createdAt)),
-                          ],
-                        ),
+                        const SizedBox(height: 4),
                       ],
                     ),
                   ),

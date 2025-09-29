@@ -4,6 +4,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/note_entity.dart';
 import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import '../../services/biometric_service.dart';
 import '../../core/constants/app_constants.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/search_bar.dart' as custom;
@@ -322,6 +323,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _navigateToDetail(String noteId) async {
+    final notes = ref.read(notesNotifierProvider).value;
+    final target = notes?.cast<NoteEntity?>().firstWhere((n) => n?.id == noteId, orElse: () => null);
+    if (target?.isLocked == true) {
+      final ok = await BiometricService().authenticate(reason: 'Unlock note');
+      if (!ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authentication required')));
+        }
+        return;
+      }
+    }
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -333,6 +345,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _navigateToEditor(String noteId) async {
+    final notes = ref.read(notesNotifierProvider).value;
+    final target = notes?.cast<NoteEntity?>().firstWhere((n) => n?.id == noteId, orElse: () => null);
+    if (target?.isLocked == true) {
+      final ok = await BiometricService().authenticate(reason: 'Unlock note');
+      if (!ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authentication required')));
+        }
+        return;
+      }
+    }
     await Navigator.push(
       context,
       MaterialPageRoute(

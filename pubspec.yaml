@@ -43,6 +43,7 @@ dependencies:
   dart_quill_delta: ^10.8.3
   encrypt: ^5.0.3
   flutter_secure_storage: ^9.2.2
+  local_auth: ^2.1.7
 
 dev_dependencies:
   flutter_test:
