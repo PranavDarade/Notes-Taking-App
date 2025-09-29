@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_constants.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/note_card.dart';
+import 'note_editor_page.dart';
 
 class NoteDetailPage extends ConsumerWidget {
   final String noteId;
@@ -276,8 +277,10 @@ class NoteDetailPage extends ConsumerWidget {
   }
 
   void _editNote(BuildContext context, String noteId) {
-    // TODO: Navigate to editor
-    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => NoteEditorPage(noteId: noteId)),
+    );
   }
 
   void _handleMenuAction(BuildContext context, WidgetRef ref, String action, String noteId) {

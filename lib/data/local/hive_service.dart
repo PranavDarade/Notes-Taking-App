@@ -18,7 +18,7 @@ class HiveService {
   }
 
   Future<void> updateNote(Note note) async {
-    await note.save();
+    await _notes().put(note.id, note);
   }
 
   Future<void> deleteNote(String id) async {

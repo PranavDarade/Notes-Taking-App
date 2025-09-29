@@ -26,7 +26,9 @@ class NoteCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final color = Color(int.parse(note.color.replaceFirst('#', '0xFF')));
+    final String hex = note.color.isNotEmpty ? note.color : '#FFFFFFFF';
+    final int parsed = int.tryParse(hex.replaceFirst('#', '0xFF')) ?? 0xFFFFFFFF;
+    final color = Color(parsed);
     
     return Slidable(
       key: ValueKey(note.id),
@@ -68,26 +70,30 @@ class NoteCard extends ConsumerWidget {
         ],
       ),
       child: Card(
-        elevation: AppConstants.cardElevation,
+        elevation: 3,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-              color: color.withOpacity(0.1),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            padding: const EdgeInsets.all(AppConstants.padding),
-            child: Column(
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    gradient: LinearGradient(
+                      colors: [color.withOpacity(0.9), color.withOpacity(0.4)],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppConstants.padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 // Header with title and actions
                 Row(
                   children: [
@@ -162,7 +168,7 @@ class NoteCard extends ConsumerWidget {
                     }).toList(),
                   ),
                 
-                const Spacer(),
+                const SizedBox(height: 8),
                 
                 // Footer with date and reminder
                 Row(
@@ -188,8 +194,10 @@ class NoteCard extends ConsumerWidget {
                       ),
                   ],
                 ),
+                    ],
+                  ),
+                ),
               ],
-            ),
           ),
         ),
       ),
@@ -197,19 +205,8 @@ class NoteCard extends ConsumerWidget {
   }
 
   String _getContentPreview(String content) {
-    try {
-      // Try to parse as JSON (Quill delta)
-      final json = content;
-      // For now, return a simple preview
-      // In a real implementation, you'd parse the Quill delta
-      return content.length > 100 
-          ? '${content.substring(0, 100)}...'
-          : content;
-    } catch (e) {
-      // If not JSON, treat as plain text
-      return content.length > 100 
-          ? '${content.substring(0, 100)}...'
-          : content;
-    }
+    if (content.isEmpty) return '';
+    final plain = content.replaceAll(RegExp('\\s+'), ' ');
+    return plain.length > 100 ? '${plain.substring(0, 100)}...' : plain;
   }
 }

@@ -5,11 +5,13 @@ import '../domain/entities/note_entity.dart';
 import '../data/local/hive_service.dart';
 import '../data/models/note.dart';
 import '../core/constants/app_constants.dart';
+import 'encryption_service.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final HiveService _hiveService = HiveService();
+  final EncryptionService _encryption = EncryptionService();
 
   /// Sync all notes between Hive and Firestore
   Future<Either<String, void>> syncAllNotes() async {
@@ -37,32 +39,39 @@ class SyncService {
   /// Get notes from Firestore
   Future<List<NoteEntity>> _getRemoteNotes(String userId) async {
     final snapshot = await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(userId)
         .collection(AppConstants.notesCollection)
-        .where('userId', isEqualTo: userId)
         .get();
 
-    return snapshot.docs.map((doc) {
+    return await Future.wait(snapshot.docs.map((doc) async {
       final data = doc.data();
       return NoteEntity(
         id: doc.id,
-        title: data['title'] ?? '',
-        content: data['content'] ?? '',
+        title: data['title'] is String ? data['title'] as String : '',
+        content: data['content'] is String
+            ? await _encryption.decryptText(data['content'] as String)
+            : '',
         tags: List<String>.from(data['tags'] ?? []),
         isPinned: data['isPinned'] ?? false,
         isFavorite: data['isFavorite'] ?? false,
         color: data['color'] ?? '#FFFFFFFF',
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-        updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+        createdAt: (data['createdAt'] is Timestamp)
+            ? (data['createdAt'] as Timestamp).toDate()
+            : DateTime.now(),
+        updatedAt: (data['updatedAt'] is Timestamp)
+            ? (data['updatedAt'] as Timestamp).toDate()
+            : DateTime.now(),
         reminderDate: data['reminderDate'] != null 
             ? (data['reminderDate'] as Timestamp).toDate()
             : null,
         isLocked: data['isLocked'] ?? false,
-        userId: data['userId'],
+        userId: userId,
         lastSyncedAt: data['lastSyncedAt'] != null 
             ? (data['lastSyncedAt'] as Timestamp).toDate()
             : null,
       );
-    }).toList();
+    }));
   }
 
   /// Merge local and remote notes, resolving conflicts
@@ -110,9 +119,10 @@ class SyncService {
 
   /// Upload a note to Firestore
   Future<void> _uploadNote(NoteEntity note, String userId) async {
+    final encryptedContent = await _encryption.encryptText(note.content);
     final data = {
       'title': note.title,
-      'content': note.content,
+      'content': encryptedContent,
       'tags': note.tags,
       'isPinned': note.isPinned,
       'isFavorite': note.isFavorite,
@@ -123,11 +133,12 @@ class SyncService {
           ? Timestamp.fromDate(note.reminderDate!)
           : null,
       'isLocked': note.isLocked,
-      'userId': userId,
       'lastSyncedAt': Timestamp.fromDate(DateTime.now()),
     };
 
     await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(userId)
         .collection(AppConstants.notesCollection)
         .doc(note.id)
         .set(data);
@@ -135,9 +146,10 @@ class SyncService {
 
   /// Update a note in Firestore
   Future<void> _updateRemoteNote(NoteEntity note, String userId) async {
+    final encryptedContent = await _encryption.encryptText(note.content);
     final data = {
       'title': note.title,
-      'content': note.content,
+      'content': encryptedContent,
       'tags': note.tags,
       'isPinned': note.isPinned,
       'isFavorite': note.isFavorite,
@@ -148,19 +160,24 @@ class SyncService {
           ? Timestamp.fromDate(note.reminderDate!)
           : null,
       'isLocked': note.isLocked,
-      'userId': userId,
       'lastSyncedAt': Timestamp.fromDate(DateTime.now()),
     };
 
     await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(userId)
         .collection(AppConstants.notesCollection)
         .doc(note.id)
-        .update(data);
+        .set(data, SetOptions(merge: true));
   }
 
   /// Delete a note from Firestore
   Future<void> deleteRemoteNote(String noteId) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
     await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(uid)
         .collection(AppConstants.notesCollection)
         .doc(noteId)
         .delete();
